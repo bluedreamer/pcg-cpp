@@ -79,7 +79,7 @@
         typedef __uint128_t pcg128_t;
     }
     #define PCG_128BIT_CONSTANT(high,low) \
-            ((pcg_extras::pcg128_t(high) << 64) + low)
+            ((pcg_extras::pcg128_t(high) << 64) + (low))
 #else
     #include "pcg_uint128.hpp"
     namespace pcg_extras {
@@ -117,15 +117,15 @@ namespace pcg_extras {
  */
 
 template <typename CharT, typename Traits>
-std::basic_ostream<CharT,Traits>&
-operator<<(std::basic_ostream<CharT,Traits>& out, pcg128_t value)
+auto
+operator<<(std::basic_ostream<CharT,Traits>& out, pcg128_t value) -> std::basic_ostream<CharT,Traits>&
 {
     auto desired_base = out.flags() & out.basefield;
     bool want_hex = desired_base == out.hex;
 
     if (want_hex) {
-        uint64_t highpart = uint64_t(value >> 64);
-        uint64_t lowpart  = uint64_t(value);
+        auto highpart = uint64_t(value >> 64);
+        auto lowpart  = uint64_t(value);
         auto desired_width = out.width();
         if (desired_width > 16) {
             out.width(desired_width - 16);
@@ -161,8 +161,8 @@ operator<<(std::basic_ostream<CharT,Traits>& out, pcg128_t value)
 }
 
 template <typename CharT, typename Traits>
-std::basic_istream<CharT,Traits>&
-operator>>(std::basic_istream<CharT,Traits>& in, pcg128_t& value)
+auto
+operator>>(std::basic_istream<CharT,Traits>& in, pcg128_t& value) -> std::basic_istream<CharT,Traits>&
 {
     typename std::basic_istream<CharT,Traits>::sentry s(in);
 
@@ -211,15 +211,13 @@ operator>>(std::basic_istream<CharT,Traits>& in, pcg128_t& value)
  */
 
 template <typename CharT, typename Traits>
-std::basic_ostream<CharT,Traits>&
-operator<<(std::basic_ostream<CharT,Traits>&out, uint8_t value)
+auto operator<<(std::basic_ostream<CharT,Traits>&out, uint8_t value) -> std::basic_ostream<CharT,Traits>&
 {
     return out << uint32_t(value);
 }
 
 template <typename CharT, typename Traits>
-std::basic_istream<CharT,Traits>&
-operator>>(std::basic_istream<CharT,Traits>& in, uint8_t& target)
+auto operator>>(std::basic_istream<CharT,Traits>& in, uint8_t& target) -> std::basic_istream<CharT,Traits>&
 {
     uint32_t value = 0xdecea5edU;
     in >> value;
@@ -238,12 +236,12 @@ operator>>(std::basic_istream<CharT,Traits>& in, uint8_t& target)
  * Ugh.
  */
 
-inline std::ostream& operator<<(std::ostream& out, uint8_t value)
+inline auto operator<<(std::ostream& out, uint8_t value) -> std::ostream&
 {
     return pcg_extras::operator<< <char>(out, value);
 }
 
-inline std::istream& operator>>(std::istream& in, uint8_t& value)
+inline auto operator>>(std::istream& in, uint8_t& value) -> std::istream&
 {
     return pcg_extras::operator>> <char>(in, value);
 }
@@ -261,7 +259,7 @@ inline std::istream& operator>>(std::istream& in, uint8_t& value)
  */
 
 template <typename itype>
-inline itype unxorshift(itype x, bitcount_t bits, bitcount_t shift)
+inline auto unxorshift(itype x, bitcount_t bits, bitcount_t shift) -> itype
 {
     if (2*shift >= bits) {
         return x ^ (x >> shift);
@@ -290,7 +288,7 @@ inline itype unxorshift(itype x, bitcount_t bits, bitcount_t shift)
  */
 
 template <typename itype>
-inline itype rotl(itype value, bitcount_t rot)
+inline auto rotl(itype value, bitcount_t rot) -> itype
 {
     constexpr bitcount_t bits = sizeof(itype) * 8;
     constexpr bitcount_t mask = bits - 1;
@@ -302,7 +300,7 @@ inline itype rotl(itype value, bitcount_t rot)
 }
 
 template <typename itype>
-inline itype rotr(itype value, bitcount_t rot)
+inline auto rotr(itype value, bitcount_t rot) -> itype
 {
     constexpr bitcount_t bits = sizeof(itype) * 8;
     constexpr bitcount_t mask = bits - 1;
@@ -404,9 +402,9 @@ inline uint64_t rotr(uint64_t value, bitcount_t rot)
  /* uneven_copy helper, case where destination ints are less than 32 bit. */
 
 template<class SrcIter, class DestIter>
-SrcIter uneven_copy_impl(
+auto uneven_copy_impl(
     SrcIter src_first, DestIter dest_first, DestIter dest_last,
-    std::true_type)
+    std::true_type) -> SrcIter
 {
     typedef typename std::iterator_traits<SrcIter>::value_type  src_t;
     typedef typename std::iterator_traits<DestIter>::value_type dest_t;
@@ -433,9 +431,9 @@ SrcIter uneven_copy_impl(
  /* uneven_copy helper, case where destination ints are more than 32 bit. */
 
 template<class SrcIter, class DestIter>
-SrcIter uneven_copy_impl(
+auto uneven_copy_impl(
     SrcIter src_first, DestIter dest_first, DestIter dest_last,
-    std::false_type)
+    std::false_type) -> SrcIter
 {
     typedef typename std::iterator_traits<SrcIter>::value_type  src_t;
     typedef typename std::iterator_traits<DestIter>::value_type dest_t;
@@ -462,8 +460,8 @@ SrcIter uneven_copy_impl(
 /* uneven_copy, call the right code for larger vs. smaller */
 
 template<class SrcIter, class DestIter>
-inline SrcIter uneven_copy(SrcIter src_first,
-                           DestIter dest_first, DestIter dest_last)
+inline auto uneven_copy(SrcIter src_first,
+                           DestIter dest_first, DestIter dest_last) -> SrcIter
 {
     typedef typename std::iterator_traits<SrcIter>::value_type  src_t;
     typedef typename std::iterator_traits<DestIter>::value_type dest_t;
@@ -507,7 +505,7 @@ void generate_to_impl(SeedSeq&& generator, DestIter dest,
         generator.generate(buffer, buffer+FROM_ELEMS);
         uneven_copy(buffer, dest, dest+size);
     } else {
-        uint32_t* buffer = static_cast<uint32_t*>(malloc(GEN_SIZE * FROM_ELEMS));
+        auto* buffer = static_cast<uint32_t*>(malloc(GEN_SIZE * FROM_ELEMS));
         generator.generate(buffer, buffer+FROM_ELEMS);
         uneven_copy(buffer, dest, dest+size);
         free(static_cast<void*>(buffer));
@@ -530,7 +528,7 @@ inline void generate_to(SeedSeq&& generator, DestIter dest)
  */
 
 template <typename UInt, size_t i = 0UL, size_t N = i+1UL, typename SeedSeq>
-inline UInt generate_one(SeedSeq&& generator)
+inline auto generate_one(SeedSeq&& generator) -> UInt
 {
     UInt result[N];
     generate_to<N>(std::forward<SeedSeq>(generator), result);
@@ -587,7 +585,7 @@ private:
 
 public:
     template<typename... Args>
-    seed_seq_from(Args&&... args) :
+    explicit seed_seq_from(Args&&... args) :
         rng_(std::forward<Args>(args)...)
     {
         // Nothing (else) to do...
@@ -600,7 +598,7 @@ public:
             *i = result_type(rng_());
     }
 
-    constexpr size_t size() const
+    constexpr auto size() const -> size_t
     {
         return (sizeof(typename RngType::result_type) > sizeof(result_type)
                 && RngType::max() > ~size_t(0UL))
@@ -619,7 +617,7 @@ public:
 template <typename IntType>
 struct static_arbitrary_seed {
 private:
-    static constexpr IntType fnv(IntType hash, const char* pos) {
+    static constexpr auto fnv(IntType hash, const char* pos) -> IntType {
         return *pos == '\0'
              ? hash
              : fnv((hash * IntType(16777619U)) ^ *pos, (pos+1));
@@ -643,7 +641,7 @@ template <typename T>
 struct printable_typename {};
 
 template <typename T>
-std::ostream& operator<<(std::ostream& out, printable_typename<T>) {
+auto operator<<(std::ostream& out, printable_typename<T>) -> std::ostream& {
     const char *implementation_typename = typeid(T).name();
 #ifdef __GNUC__
     int status;

@@ -53,7 +53,7 @@ using pcg_extras::operator<<;
 
 #if !PCG_EMULATED_128BIT_MATH || !AWKWARD_128BIT_CODE
 
-int main(int argc, char** argv)
+auto main(int argc, char** argv) -> int
 {
     // Read command-line options
 
